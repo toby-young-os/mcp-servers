@@ -123,3 +123,6 @@ Thumbs.db
 
 # Emacs backups
 *~
+
+# Environment files
+.env
