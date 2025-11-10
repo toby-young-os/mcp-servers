@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Mapping
+from typing import Awaitable, Callable, Mapping
 
 from mcp_math_servers.servers import ServerBlueprint
 
@@ -14,7 +14,8 @@ class ClientScenario:
 
     name: str
     description: str
-    run: Callable[[ServerBlueprint], None]
+    blueprint_key: str
+    run: Callable[[ServerBlueprint], Awaitable[None]]
 
 
 ScenarioRegistry = Mapping[str, ClientScenario]
