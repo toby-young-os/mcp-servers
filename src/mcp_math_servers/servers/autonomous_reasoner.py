@@ -18,7 +18,7 @@ except ImportError:  # pragma: no cover - dependency managed via pyproject
 CATEGORY = "Autonomous / Server-Side Reasoning"
 SERVER_NAME = "math-autonomous-reasoner"
 
-_DEFAULT_MODEL = "gpt-4o-mini"
+_DEFAULT_MODEL = "gpt-4.1-mini"
 _SYSTEM_PROMPT = (
     "You are an autonomous math tutor. Solve the user's problem step by step and "
     "produce JSON with keys 'reasoning_steps' (list of short steps) and 'final_answer'. "
