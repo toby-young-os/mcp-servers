@@ -13,3 +13,13 @@ fastmcp-math-demo capability    # run a single scenario
 ```
 
 Each scenario instantiates the relevant FastMCP server, prints its manifest, and executes a representative tool (when applicable) so you can observe the different MCP interaction patterns.
+
+### OpenAI Credentials
+
+Some scenarios (e.g., autonomous reasoning) call OpenAI. Create a `.env` file next to `pyproject.toml` with:
+
+```bash
+OPENAI_API_KEY=sk-...
+```
+
+Keys loaded via `python-dotenv`, so the demo client and servers will automatically pick them up if present. Without a key, the autonomous server falls back to a heuristic reasoner.
