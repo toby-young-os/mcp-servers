@@ -14,6 +14,19 @@ fastmcp-math-demo capability    # run a single scenario
 
 Each scenario instantiates the relevant FastMCP server, prints its manifest, and executes a representative tool (when applicable) so you can observe the different MCP interaction patterns.
 
+### Interactive Chat
+
+To converse with a server in a REPL-style loop:
+
+```bash
+fastmcp-math-chat --server autonomous        # default, asks OpenAI-powered server
+fastmcp-math-chat --server prompt            # simple math ops that return prompts
+fastmcp-math-chat --server data --show-json  # inspect raw JSON responses
+fastmcp-math-chat --server autonomous --model gpt-4.1-mini
+```
+
+Use `exit` to quit, `help` for guidance, and `tools` to reprint the manifest. The autonomous server accepts natural-language questions; the others expect commands in the form `add 2 3`, `divide 10 5`, etc.
+
 ### OpenAI Credentials
 
 Some scenarios (e.g., autonomous reasoning) call OpenAI. Create a `.env` file next to `pyproject.toml` with:
