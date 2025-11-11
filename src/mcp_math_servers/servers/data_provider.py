@@ -1,4 +1,4 @@
-"""Data-providing FastMCP server implementation."""
+"""Data-providing FastMCP server implementation (see docs/categories/data_provider.md)."""
 
 from __future__ import annotations
 

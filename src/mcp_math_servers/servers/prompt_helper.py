@@ -1,4 +1,5 @@
-"""Prompt-returning FastMCP server implementation."""
+"""Prompt-returning FastMCP server implementation (see docs/categories/prompt_helper.md).
+"""
 
 from __future__ import annotations
 

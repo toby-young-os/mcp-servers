@@ -1,4 +1,5 @@
-"""Autonomous reasoning FastMCP server implementation."""
+"""Autonomous reasoning FastMCP server implementation (see docs/categories/autonomous_reasoner.md).
+"""
 
 from __future__ import annotations
 

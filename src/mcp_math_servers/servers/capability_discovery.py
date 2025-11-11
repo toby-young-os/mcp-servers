@@ -1,4 +1,4 @@
-"""Capability discovery FastMCP server implementation."""
+"""Capability discovery FastMCP server implementation (see docs/categories/capability_discovery.md)."""
 
 from __future__ import annotations
 
