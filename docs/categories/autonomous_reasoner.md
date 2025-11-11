@@ -2,7 +2,7 @@
 
 **Category:** Autonomous / Server-Side Reasoning
 
-This server delegates math word problems to OpenAI (with a heuristic fallback), returning both `reasoning_steps` and the final answer so clients can surface the result directly.
+This server delegates math word problems to OpenAI, returning both `reasoning_steps` and the final answer so clients can surface the result directly. OpenAI credentials (`OPENAI_API_KEY`) are required.
 
 ## Quick Demo
 

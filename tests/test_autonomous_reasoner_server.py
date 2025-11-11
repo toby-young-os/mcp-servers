@@ -26,7 +26,7 @@ def test_autonomous_reasoner_returns_reasoning(run, autonomous_tool):
     assert payload["problem"].startswith("If you double 3")
     assert "final_answer" in payload
     assert "reasoning_steps" in payload
-    assert payload["source"] in {"fallback", "openai"}
+    assert payload["source"] == "openai"
 
 
 @pytest.mark.skipif(

@@ -80,7 +80,7 @@ _SERVER_BLUEPRINTS: tuple[ServerBlueprint, ...] = (
         name=AUTONOMOUS_SERVER_NAME,
         category=AUTONOMOUS_CATEGORY,
         factory=build_autonomous_reasoner,
-        summary="Delegates math problem solving to an internal OpenAI call (with fallback).",
+        summary="Delegates math problem solving to an internal OpenAI call.",
         aliases=("autonomous", "reasoner"),
     ),
 )

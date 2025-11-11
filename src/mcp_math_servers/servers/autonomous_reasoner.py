@@ -5,9 +5,8 @@ from __future__ import annotations
 
 import json
 import os
-import re
 from dataclasses import asdict, dataclass
-from typing import Any, Callable
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -42,7 +41,7 @@ class AutonomousResult:
     :param reasoning_steps: Step-by-step reasoning summary.
     :param final_answer: Final numeric answer reported to the user.
     :param model: Model identifier used to generate the response.
-    :param source: Source identifier (``openai`` or ``fallback``).
+    :param source: Source identifier (always ``openai`` for this server).
     """
 
     problem: str
@@ -119,72 +118,17 @@ async def _chat_completion(client: AsyncOpenAI, *, model: str, problem: str) -> 
     }
 
 
-def _fallback_reasoner(problem: str) -> dict[str, Any]:
-    """
-    Provide a heuristic reasoning result when OpenAI is unavailable.
-
-    :param problem: Natural-language math problem.
-    :returns: Dictionary mimicking the autonomous result structure.
-    """
-
-    numbers = [float(value) for value in re.findall(r"-?\d+(?:\.\d+)?", problem)]
-    lowered = problem.lower()
-    operation_map: dict[str, Callable[[float, float], float]] = {
-        "add": lambda a, b: a + b,
-        "plus": lambda a, b: a + b,
-        "sum": lambda a, b: a + b,
-        "subtract": lambda a, b: a - b,
-        "minus": lambda a, b: a - b,
-        "difference": lambda a, b: a - b,
-        "multiply": lambda a, b: a * b,
-        "times": lambda a, b: a * b,
-        "product": lambda a, b: a * b,
-        "divide": lambda a, b: a / b if b != 0 else float("inf"),
-        "quotient": lambda a, b: a / b if b != 0 else float("inf"),
-    }
-
-    result = None
-    operation = "analysis"
-    if len(numbers) >= 2:
-        for keyword, fn in operation_map.items():
-            if keyword in lowered:
-                result = fn(numbers[0], numbers[1])
-                operation = keyword
-                break
-
-    steps = [
-        "Fallback reasoner engaged due to missing OpenAI credentials.",
-        f"Identified operation '{operation}' using heuristic parsing.",
-    ]
-    final_answer = result if result is not None else "Unable to determine answer."
-    steps.append(f"Computed result: {final_answer}")
-
-    return {
-        "reasoning_steps": steps,
-        "final_answer": str(final_answer),
-        "model": "heuristic-fallback",
-        "source": "fallback",
-    }
-
-
 async def _run_reasoning(problem: str, *, model: str) -> dict[str, Any]:
     """
-    Execute reasoning via OpenAI with a fallback to heuristics.
+    Execute reasoning via OpenAI.
 
     :param problem: Natural-language math problem.
     :param model: Model identifier to use for OpenAI requests.
-    :returns: Result dictionary from OpenAI or the fallback reasoner.
+    :returns: Result dictionary from OpenAI.
     """
 
-    try:
-        client = _build_client()
-    except RuntimeError:
-        return _fallback_reasoner(problem)
-
-    try:
-        return await _chat_completion(client, model=model, problem=problem)
-    except Exception:
-        return _fallback_reasoner(problem)
+    client = _build_client()
+    return await _chat_completion(client, model=model, problem=problem)
 
 
 def build_server() -> FastMCP:
@@ -199,7 +143,7 @@ def build_server() -> FastMCP:
         version="0.1.0",
         instructions=(
             "Delegates math reasoning to an internal OpenAI call and returns the final answer "
-            "plus reasoning steps. Falls back to a heuristic reasoner if credentials are missing."
+            "plus reasoning steps. Requires ``OPENAI_API_KEY`` to be configured."
         ),
     )
 
