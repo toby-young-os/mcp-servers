@@ -11,9 +11,9 @@ from typing import Any, Callable
 from fastmcp import FastMCP
 
 try:
-    from openai import OpenAI
+    from openai import AsyncOpenAI
 except ImportError:  # pragma: no cover - dependency managed via pyproject
-    OpenAI = None
+    AsyncOpenAI = None
 
 CATEGORY = "Autonomous / Server-Side Reasoning"
 SERVER_NAME = "math-autonomous-reasoner"
@@ -38,17 +38,17 @@ class AutonomousResult:
         return asdict(self)
 
 
-def _build_client() -> OpenAI:
-    if OpenAI is None:
+def _build_client() -> AsyncOpenAI:
+    if AsyncOpenAI is None:
         raise RuntimeError("openai package is not available.")
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY environment variable is required for this server.")
-    return OpenAI(api_key=api_key)
+    return AsyncOpenAI(api_key=api_key)
 
 
-def _chat_completion(client: OpenAI, *, model: str, problem: str) -> dict[str, Any]:
-    response = client.chat.completions.create(
+async def _chat_completion(client: AsyncOpenAI, *, model: str, problem: str) -> dict[str, Any]:
+    response = await client.chat.completions.create(
         model=model,
         temperature=0.1,
         max_tokens=400,
@@ -121,14 +121,14 @@ def _fallback_reasoner(problem: str) -> dict[str, Any]:
     }
 
 
-def _run_reasoning(problem: str, *, model: str) -> dict[str, Any]:
+async def _run_reasoning(problem: str, *, model: str) -> dict[str, Any]:
     try:
         client = _build_client()
     except RuntimeError:
         return _fallback_reasoner(problem)
 
     try:
-        return _chat_completion(client, model=model, problem=problem)
+        return await _chat_completion(client, model=model, problem=problem)
     except Exception:
         return _fallback_reasoner(problem)
 
@@ -153,8 +153,8 @@ def build_server() -> FastMCP:
             "and returns the final answer with the reasoning path."
         ),
     )
-    def solve_math_problem(problem: str, model: str = _DEFAULT_MODEL) -> dict[str, Any]:
-        payload = _run_reasoning(problem, model=model)
+    async def solve_math_problem(problem: str, model: str = _DEFAULT_MODEL) -> dict[str, Any]:
+        payload = await _run_reasoning(problem, model=model)
         result = AutonomousResult(
             problem=problem,
             reasoning_steps=payload["reasoning_steps"],

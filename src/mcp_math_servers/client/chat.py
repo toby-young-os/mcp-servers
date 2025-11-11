@@ -7,8 +7,14 @@ import json
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
-import anyio
+import asyncio
 
+from mcp_math_servers.client.planner import (
+    MCPPlanner,
+    PlannerError,
+    PlannerResult,
+    is_planner_available,
+)
 from mcp_math_servers.servers import ServerBlueprint, get_blueprint
 
 DEFAULT_SERVER = "autonomous"
@@ -39,6 +45,20 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print the raw JSON payload returned by the tool.",
     )
+    planner_group = parser.add_mutually_exclusive_group()
+    planner_group.add_argument(
+        "--planner",
+        dest="planner",
+        action="store_true",
+        help="Force the LLM planner to interpret natural-language queries.",
+    )
+    planner_group.add_argument(
+        "--no-planner",
+        dest="planner",
+        action="store_false",
+        help="Disable the LLM planner even if available.",
+    )
+    parser.set_defaults(planner=None)
     return parser
 
 
@@ -73,6 +93,7 @@ class ChatContext:
     blueprint: ServerBlueprint
     tools: Mapping[str, object]
     args: argparse.Namespace
+    planner: MCPPlanner | None = None
 
 
 class BaseHandler:
@@ -193,7 +214,55 @@ class AutonomousHandler(BaseHandler):
         print(f"Final answer: {payload.get('final_answer')}")
 
 
+class PlannerHandler(BaseHandler):
+    def __init__(self, context: ChatContext, planner: MCPPlanner) -> None:
+        super().__init__(context)
+        self._planner = planner
+
+    def help(self) -> None:
+        print("Ask any natural-language question. Type 'exit' to quit.")
+
+    async def handle(self, user_input: str) -> None:
+        print("[planner] Interpreting request via LLM...")
+        try:
+            result = await self._planner.run(user_input)
+        except PlannerError as exc:
+            print(f"[planner] {exc}")
+            if self.context.args.show_json:
+                print("[planner] Falling back to manual mode for this turn.")
+            return
+        action = "respond" if not result.tool_name else f"call {result.tool_name}"
+        print(f"[planner] Completed plan: {action}")
+        self._print_result(result)
+
+    def _print_result(self, result: PlannerResult) -> None:
+        if self.context.args.show_json:
+            print(
+                json.dumps(
+                    {
+                        "message": result.message,
+                        "tool": result.tool_name,
+                        "arguments": result.arguments,
+                        "result": result.tool_result,
+                        "raw_planner_response": result.raw_response,
+                    },
+                    indent=2,
+                )
+            )
+        message = (result.message or "").strip()
+        if message:
+            print(message)
+        else:
+            print("[planner] Received an empty response from the LLM.")
+            if not self.context.args.show_json:
+                print(
+                    "Re-run with --show-json or --no-planner if the issue persists."
+                )
+
+
 def _make_handler(blueprint: ServerBlueprint, context: ChatContext) -> BaseHandler:
+    if context.planner is not None:
+        return PlannerHandler(context, context.planner)
     if blueprint.name == "math-capability-registry":
         return CapabilityHandler(context)
     if blueprint.name == "math-data-provider":
@@ -207,10 +276,36 @@ async def _async_main(args: argparse.Namespace) -> None:
     blueprint = get_blueprint(args.server)
     server = blueprint.factory()
     tools = await server._tool_manager.get_tools()  # type: ignore[attr-defined]
-    context = ChatContext(blueprint=blueprint, tools=tools, args=args)
+    planner = None
+    use_planner = _should_use_planner(args, blueprint)
+    if use_planner:
+        if not is_planner_available():
+            print("[chat] Planner requested but OpenAI is unavailable; falling back to manual mode.")
+        else:
+            try:
+                planner = MCPPlanner(
+                    tools=tools,
+                    model=args.model or "gpt-4.1-mini",
+                )
+            except PlannerError as exc:
+                print(f"[chat] Failed to initialize planner: {exc}")
+                planner = None
+
+    context = ChatContext(blueprint=blueprint, tools=tools, args=args, planner=planner)
     handler = _make_handler(blueprint, context)
 
-    print(f"[chat] Selected server '{blueprint.name}' ({blueprint.category})")
+    from mcp_math_servers import __version__
+
+    print(
+        f"[chat] fastmcp-math-servers v{__version__} | "
+        f"Selected server '{blueprint.name}' ({blueprint.category})"
+    )
+    if context.planner:
+        print(
+            f"[chat] Planner enabled using model {args.model or 'gpt-4.1-mini'}."
+        )
+    else:
+        print("[chat] Planner disabled; manual commands required.")
     instructions = getattr(server, "instructions", None)
     if instructions:
         print(instructions)
@@ -219,7 +314,7 @@ async def _async_main(args: argparse.Namespace) -> None:
 
     while True:
         try:
-            user_input = await anyio.to_thread.run_sync(_readline, "> ")
+            user_input = await asyncio.to_thread(_readline, "> ")
         except (EOFError, KeyboardInterrupt):
             print("\nExiting chat.")
             break
@@ -237,12 +332,16 @@ async def _async_main(args: argparse.Namespace) -> None:
             _print_manifest(tools)
             continue
         await handler.handle(user_input)
+def _should_use_planner(args: argparse.Namespace, blueprint: ServerBlueprint) -> bool:
+    if args.planner is not None:
+        return args.planner
+    return blueprint.name != "math-autonomous-reasoner"
 
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
-    anyio.run(_async_main, args)
+    asyncio.run(_async_main(args))
 
 
 if __name__ == "__main__":  # pragma: no cover

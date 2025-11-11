@@ -6,7 +6,7 @@ import argparse
 import json
 from typing import Iterable
 
-import anyio
+import asyncio
 
 from mcp_math_servers.client import ClientScenario, ScenarioRegistry
 from mcp_math_servers.servers import ServerBlueprint, get_blueprint
@@ -167,7 +167,7 @@ def main(argv: list[str] | None = None) -> None:
             )
         targets = [scenario]
 
-    anyio.run(_run_scenarios, targets)
+    asyncio.run(_run_scenarios(targets))
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -23,9 +23,11 @@ fastmcp-math-chat --server autonomous        # default, asks OpenAI-powered serv
 fastmcp-math-chat --server prompt            # simple math ops that return prompts
 fastmcp-math-chat --server data --show-json  # inspect raw JSON responses
 fastmcp-math-chat --server autonomous --model gpt-4.1-mini
+fastmcp-math-chat --server data --planner    # let the LLM planner call tools for you
+fastmcp-math-chat --server data --no-planner # fall back to manual commands
 ```
 
-Use `exit` to quit, `help` for guidance, and `tools` to reprint the manifest. The autonomous server accepts natural-language questions; the others expect commands in the form `add 2 3`, `divide 10 5`, etc.
+Use `exit` to quit, `help` for guidance, and `tools` to reprint the manifest. When a planner is available (OpenAI key loaded), the chat client automatically routes non-autonomous servers through the LLM planner so you can type natural-language requests. Disable that behavior with `--no-planner`. Without the planner, the data/prompt servers expect commands like `add 2 3` or `divide 10 5`.
 
 ### OpenAI Credentials
 
