@@ -21,6 +21,16 @@ class PlannerError(RuntimeError):
 
 @dataclass(slots=True)
 class PlannerDecision:
+    """
+    Structured instruction returned from the planner LLM.
+
+    :param action: Planner directive such as ``respond`` or ``call_tool``.
+    :param message: User-facing response text when ``action`` is ``respond``.
+    :param tool_name: Name of the tool to invoke when ``action`` is ``call_tool``.
+    :param arguments: JSON arguments to forward to the requested tool.
+    :param raw_response: Unmodified LLM JSON string for auditing.
+    """
+
     action: str | None
     message: str | None
     tool_name: str | None
@@ -30,13 +40,23 @@ class PlannerDecision:
 
 @dataclass(slots=True)
 class PlannerResult:
+    """
+    Final planner outcome combining tool decisions and user-facing text.
+
+    :param message: Text that should be relayed to the user.
+    :param tool_name: Tool invoked during planning, if any.
+    :param arguments: Arguments that were supplied to the invoked tool.
+    :param tool_result: Raw payload returned by the tool invocation.
+    :param raw_response: Original JSON emitted by the planner LLM.
+    """
+
     message: str = ""
     tool_name: str | None = None
     arguments: Mapping[str, Any] | None = None
     tool_result: Mapping[str, Any] | Sequence[Any] | None = None
     raw_response: str | None = None
 
-
+# Instruction template conveying the allowed JSON schema to the planner LLM.
 SYSTEM_PROMPT_TEMPLATE = """You are an MCP-aware planner sitting between a user and a set of tools.
 You must ALWAYS respond with JSON that matches exactly this schema and nothing else:
 {{
@@ -59,6 +79,13 @@ Rules:
 
 
 def _format_manifest(tools: Mapping[str, Any]) -> str:
+    """
+    Build a human-readable manifest description of the registered tools.
+
+    :param tools: Mapping of tool names to tool objects.
+    :returns: Human-readable string summarizing the tools and schemas.
+    """
+
     parts: list[str] = []
     for name, tool in tools.items():
         description = getattr(tool, "description", "No description provided.")
@@ -70,11 +97,17 @@ def _format_manifest(tools: Mapping[str, Any]) -> str:
 
 
 def is_planner_available() -> bool:
+    """
+    Return ``True`` when the async OpenAI client and API key are available.
+
+    :returns: ``True`` if AsyncOpenAI can be instantiated, otherwise ``False``.
+    """
+
     return AsyncOpenAI is not None and bool(os.environ.get("OPENAI_API_KEY"))
 
 
 class MCPPlanner:
-    """Simple planner that uses OpenAI to determine MCP tool usage."""
+    """Async planner that uses OpenAI to determine MCP tool usage."""
 
     def __init__(
         self,
@@ -83,6 +116,13 @@ class MCPPlanner:
         model: str = "gpt-4.1-mini",
         timeout: float = 45.0,
     ) -> None:
+        """
+        Initialize the planner.
+
+        :param tools: Mapping of tool names to FastMCP tool instances.
+        :param model: OpenAI chat model identifier to use.
+        :param timeout: Maximum seconds to wait for each OpenAI request.
+        """
         if not is_planner_available():
             raise PlannerError(
                 "OpenAI client is unavailable. Ensure `openai` is installed and OPENAI_API_KEY is set."
@@ -94,6 +134,13 @@ class MCPPlanner:
         self._timeout = timeout
 
     async def run(self, user_input: str) -> PlannerResult:
+        """
+        Produce a planner decision based on free-form user text.
+
+        :param user_input: The most recent user utterance.
+        :returns: PlannerResult detailing how to respond or which tool to call.
+        :raises PlannerError: If the planner cannot produce a valid instruction.
+        """
         decision = await self._decide(user_input)
         if decision.action == "respond":
             if not decision.message:
@@ -132,6 +179,12 @@ class MCPPlanner:
         raise PlannerError(f"Unknown planner action '{decision.action}'.")
 
     async def _decide(self, user_input: str) -> PlannerDecision:
+        """
+        Request a planner decision from OpenAI.
+
+        :param user_input: Raw user text to feed into the planner prompt.
+        :returns: Parsed PlannerDecision instructions from the LLM.
+        """
         prompt = SYSTEM_PROMPT_TEMPLATE.format(manifest=self._manifest)
         messages = [
             {"role": "system", "content": prompt},
@@ -148,6 +201,15 @@ class MCPPlanner:
         arguments: Mapping[str, Any],
         payload: Mapping[str, Any] | Sequence[Any],
     ) -> tuple[str, str]:
+        """
+        Ask the planner to summarize the outcome of a completed tool call.
+
+        :param user_input: Original question from the user.
+        :param tool_name: Name of the tool that was executed.
+        :param arguments: Arguments that were passed to the tool.
+        :param payload: Result returned by the tool.
+        :returns: Tuple of (message, raw_response) for user delivery.
+        """
         prompt = SYSTEM_PROMPT_TEMPLATE.format(manifest=self._manifest)
         tool_summary = json.dumps(
             {
@@ -187,6 +249,12 @@ class MCPPlanner:
         return decision.message, decision.raw_response
 
     async def _complete(self, messages):
+        """
+        Execute the OpenAI chat completion with timeout handling.
+
+        :param messages: Conversation payload conforming to OpenAI's schema.
+        :returns: Extracted text content from the first completion choice.
+        """
         try:
             response = await asyncio.wait_for(
                 self._client.chat.completions.create(
@@ -205,6 +273,13 @@ class MCPPlanner:
             raise PlannerError(f"OpenAI planner failed: {exc}") from exc
 
     def _extract_content(self, response):
+        """
+        Convert an OpenAI response object into a normalized text payload.
+
+        :param response: ChatCompletions response returned by OpenAI.
+        :returns: Normalized string content.
+        :raises PlannerError: If the response is missing message content.
+        """
         choice = response.choices[0].message
         if not choice:
             raise PlannerError("Planner response did not include a message.")
@@ -228,6 +303,13 @@ class MCPPlanner:
         return str(content).strip()
 
     def _parse_decision(self, content: str) -> PlannerDecision:
+        """
+        Deserialize planner JSON into a PlannerDecision instance.
+
+        :param content: Raw JSON emitted by the planner.
+        :returns: PlannerDecision data structure.
+        :raises PlannerError: If the JSON is malformed.
+        """
         try:
             sanitized = content.strip()
             if sanitized.startswith("```"):

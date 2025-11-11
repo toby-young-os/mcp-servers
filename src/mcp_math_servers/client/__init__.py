@@ -10,7 +10,14 @@ from mcp_math_servers.servers import ServerBlueprint
 
 @dataclass(slots=True)
 class ClientScenario:
-    """Describes how the demo client should exercise a server."""
+    """
+    Describe how the demo client should exercise a server blueprint.
+
+    :param name: Short identifier for the scenario.
+    :param description: Human-readable explanation of what the scenario does.
+    :param blueprint_key: Blueprint name or alias to load for the scenario.
+    :param run: Awaitable callable that executes the scenario logic.
+    """
 
     name: str
     description: str
@@ -19,5 +26,6 @@ class ClientScenario:
 
 
 ScenarioRegistry = Mapping[str, ClientScenario]
+"""Mapping from scenario key to ``ClientScenario`` definitions."""
 
 __all__ = ["ClientScenario", "ScenarioRegistry"]
