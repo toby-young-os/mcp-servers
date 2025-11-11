@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass
-from typing import Mapping, Sequence
+from typing import Callable, ClassVar, Mapping, Sequence
 
 import asyncio
 
@@ -203,7 +203,8 @@ class CapabilityHandler(BaseHandler):
 class _BinaryOpMixin:
     """Mixin that parses simple binary math commands."""
 
-    OPERATIONS = {}
+    OperationBuilder = Callable[[float, float], dict[str, float]]
+    OPERATIONS: ClassVar[dict[str, tuple[str, OperationBuilder]]] = {}
 
     def _parse(self, user_input: str):
         """
@@ -413,6 +414,7 @@ async def _async_main(args: argparse.Namespace) -> None:
     tools = await server._tool_manager.get_tools()  # type: ignore[attr-defined]
     planner = None
     use_planner = _should_use_planner(args, blueprint)
+    # Planner is optional; only instantiate when OpenAI credentials are present.
     if use_planner:
         if not is_planner_available():
             print("[chat] Planner requested but OpenAI is unavailable; falling back to manual mode.")
@@ -466,7 +468,11 @@ async def _async_main(args: argparse.Namespace) -> None:
         if lowered in MANIFEST_COMMANDS:
             _print_manifest(tools)
             continue
+
+        # Dispatch to the handler (planner-aware or manual) for execution.
         await handler.handle(user_input)
+
+
 def _should_use_planner(args: argparse.Namespace, blueprint: ServerBlueprint) -> bool:
     """
     Determine whether the planner should be engaged for the session.
