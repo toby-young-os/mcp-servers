@@ -41,7 +41,9 @@ Keys loaded via `python-dotenv`, so the demo client and servers will automatical
 
 ## Category Walkthrough
 
-- **Capability Server (Category 1)** – Lists tool schemas but never executes. Demo with `fastmcp-math-chat --server capability --no-planner`; attempted commands return the “read-only” reminder. More details: [docs/categories/capability_discovery.md](docs/categories/capability_discovery.md).
-- **Data Server (Category 2)** – Executes math tools and returns clean JSON (`operation`, `inputs`, `result`). Try `fastmcp-math-chat --server data --no-planner --show-json` and run `add 2 3`. More details: [docs/categories/data_provider.md](docs/categories/data_provider.md).
-- **Prompt-Returning Server (Category 3)** – Returns both the structured data and a `next_prompt` to guide downstream reasoning. Example: `fastmcp-math-chat --server prompt --no-planner --show-json` followed by `add 5 11`. More details: [docs/categories/prompt_helper.md](docs/categories/prompt_helper.md).
-- **Autonomous Server (Category 4)** – Runs reasoning internally with OpenAI and returns `reasoning_steps` plus the final answer. Example: `fastmcp-math-chat --server autonomous --no-planner --show-json` and ask “What is the result of doubling 7 and then subtracting 3?” More details: [docs/categories/autonomous_reasoner.md](docs/categories/autonomous_reasoner.md).
+See [docs/CATEGORIES.md](docs/CATEGORIES.md) for a full breakdown of each category and links to the detailed guides.
+
+- **Capability Server (Category 1)** – Lists tool schemas but never executes. Demo with `fastmcp-math-chat --server capability --no-planner`; attempted commands return the “read-only” reminder.
+- **Data Server (Category 2)** – Executes math tools and returns clean JSON (`operation`, `inputs`, `result`). Try `fastmcp-math-chat --server data --no-planner --show-json` and run `add 2 3`.
+- **Prompt-Returning Server (Category 3)** – Returns both the structured data and a `next_prompt` to guide downstream reasoning. Example: `fastmcp-math-chat --server prompt --no-planner --show-json` followed by `add 5 11`.
+- **Autonomous Server (Category 4)** – Runs reasoning internally with OpenAI and returns `reasoning_steps` plus the final answer. Example: `fastmcp-math-chat --server autonomous --no-planner --show-json` and ask “What is the result of doubling 7 and then subtracting 3?”

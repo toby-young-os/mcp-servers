@@ -2,7 +2,7 @@
 
 **Category:** Capability Discovery / Tool Registration
 
-The capability server only advertises tool schemas and never executes the corresponding operations. Its purpose is to expose a manifest that planners or agents can inspect before deciding which execution-oriented server to call. Attempting to execute a tool results in a `DisabledError` reminding the user to use another server.
+This server only advertises tool schemas; it never executes the operations. A planner can inspect the manifest to learn which math tools exist before calling execution-oriented servers.
 
 ## Quick Demo
 
@@ -10,4 +10,4 @@ The capability server only advertises tool schemas and never executes the corres
 fastmcp-math-chat --server capability --no-planner
 ```
 
-Typing commands such as `add 2 3` will simply remind you that the registry is read-only, which illustrates category 1 of the MCP taxonomy.
+Typing commands like `add 2 3` results in a reminder that the registry is read-only, illustrating Category 1 behavior.
