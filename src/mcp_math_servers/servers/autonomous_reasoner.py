@@ -1,4 +1,5 @@
-"""Autonomous reasoning FastMCP server implementation."""
+"""Autonomous reasoning FastMCP server implementation (see docs/categories/autonomous_reasoner.md).
+"""
 
 from __future__ import annotations
 
@@ -11,23 +12,39 @@ from typing import Any, Callable
 from fastmcp import FastMCP
 
 try:
-    from openai import OpenAI
+    from openai import AsyncOpenAI
 except ImportError:  # pragma: no cover - dependency managed via pyproject
-    OpenAI = None
+    AsyncOpenAI = None
 
 CATEGORY = "Autonomous / Server-Side Reasoning"
+"""Human-readable label for the autonomous reasoning server category."""
+
 SERVER_NAME = "math-autonomous-reasoner"
+"""Identifier advertised via the MCP server manifest."""
 
 _DEFAULT_MODEL = "gpt-4.1-mini"
+"""Default OpenAI model used by the autonomous server."""
+
 _SYSTEM_PROMPT = (
     "You are an autonomous math tutor. Solve the user's problem step by step and "
     "produce JSON with keys 'reasoning_steps' (list of short steps) and 'final_answer'. "
     "Keep reasoning grounded in arithmetic and avoid prose outside the JSON."
 )
+"""Instruction prompt fed to the autonomous reasoning OpenAI call."""
 
 
 @dataclass(slots=True)
 class AutonomousResult:
+    """
+    Serialized result returned by the autonomous reasoning server.
+
+    :param problem: Original user problem text.
+    :param reasoning_steps: Step-by-step reasoning summary.
+    :param final_answer: Final numeric answer reported to the user.
+    :param model: Model identifier used to generate the response.
+    :param source: Source identifier (``openai`` or ``fallback``).
+    """
+
     problem: str
     reasoning_steps: list[str]
     final_answer: str
@@ -35,20 +52,42 @@ class AutonomousResult:
     source: str
 
     def serialize(self) -> dict[str, Any]:
+        """
+        Convert the dataclass to a dictionary for FastMCP responses.
+
+        :returns: Dictionary representation of the result.
+        """
+
         return asdict(self)
 
 
-def _build_client() -> OpenAI:
-    if OpenAI is None:
+def _build_client() -> AsyncOpenAI:
+    """
+    Build an AsyncOpenAI client using the ``OPENAI_API_KEY`` environment variable.
+
+    :returns: Configured AsyncOpenAI client.
+    :raises RuntimeError: If the package is unavailable or the API key is missing.
+    """
+
+    if AsyncOpenAI is None:
         raise RuntimeError("openai package is not available.")
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY environment variable is required for this server.")
-    return OpenAI(api_key=api_key)
+    return AsyncOpenAI(api_key=api_key)
 
 
-def _chat_completion(client: OpenAI, *, model: str, problem: str) -> dict[str, Any]:
-    response = client.chat.completions.create(
+async def _chat_completion(client: AsyncOpenAI, *, model: str, problem: str) -> dict[str, Any]:
+    """
+    Execute the OpenAI chat completion for the autonomous reasoner.
+
+    :param client: AsyncOpenAI client.
+    :param model: Model identifier to use for the request.
+    :param problem: Natural-language math problem.
+    :returns: Dictionary containing reasoning steps and final answer.
+    """
+
+    response = await client.chat.completions.create(
         model=model,
         temperature=0.1,
         max_tokens=400,
@@ -81,6 +120,13 @@ def _chat_completion(client: OpenAI, *, model: str, problem: str) -> dict[str, A
 
 
 def _fallback_reasoner(problem: str) -> dict[str, Any]:
+    """
+    Provide a heuristic reasoning result when OpenAI is unavailable.
+
+    :param problem: Natural-language math problem.
+    :returns: Dictionary mimicking the autonomous result structure.
+    """
+
     numbers = [float(value) for value in re.findall(r"-?\d+(?:\.\d+)?", problem)]
     lowered = problem.lower()
     operation_map: dict[str, Callable[[float, float], float]] = {
@@ -121,20 +167,32 @@ def _fallback_reasoner(problem: str) -> dict[str, Any]:
     }
 
 
-def _run_reasoning(problem: str, *, model: str) -> dict[str, Any]:
+async def _run_reasoning(problem: str, *, model: str) -> dict[str, Any]:
+    """
+    Execute reasoning via OpenAI with a fallback to heuristics.
+
+    :param problem: Natural-language math problem.
+    :param model: Model identifier to use for OpenAI requests.
+    :returns: Result dictionary from OpenAI or the fallback reasoner.
+    """
+
     try:
         client = _build_client()
     except RuntimeError:
         return _fallback_reasoner(problem)
 
     try:
-        return _chat_completion(client, model=model, problem=problem)
+        return await _chat_completion(client, model=model, problem=problem)
     except Exception:
         return _fallback_reasoner(problem)
 
 
 def build_server() -> FastMCP:
-    """Return a FastMCP server that performs internal reasoning with OpenAI."""
+    """
+    Return a FastMCP server that performs internal reasoning with OpenAI.
+
+    :returns: Configured ``FastMCP`` instance for the autonomous server.
+    """
 
     server = FastMCP(
         name=SERVER_NAME,
@@ -153,8 +211,16 @@ def build_server() -> FastMCP:
             "and returns the final answer with the reasoning path."
         ),
     )
-    def solve_math_problem(problem: str, model: str = _DEFAULT_MODEL) -> dict[str, Any]:
-        payload = _run_reasoning(problem, model=model)
+    async def solve_math_problem(problem: str, model: str = _DEFAULT_MODEL) -> dict[str, Any]:
+        """
+        Solve a math problem using the autonomous reasoner.
+
+        :param problem: Natural-language math problem description.
+        :param model: Optional override for the OpenAI model.
+        :returns: Serialized ``AutonomousResult`` dictionary.
+        """
+
+        payload = await _run_reasoning(problem, model=model)
         result = AutonomousResult(
             problem=problem,
             reasoning_steps=payload["reasoning_steps"],

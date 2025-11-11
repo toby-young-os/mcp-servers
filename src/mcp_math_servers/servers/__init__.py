@@ -15,7 +15,15 @@ class ServerFactory(Protocol):
 
 @dataclass(slots=True)
 class ServerBlueprint:
-    """Describes an example server and the MCP category it demonstrates."""
+    """
+    Describes an example server and the MCP category it demonstrates.
+
+    :param name: Unique server identifier.
+    :param category: Human-readable MCP category name.
+    :param factory: Callable that constructs the FastMCP server.
+    :param summary: Short description of the server capabilities.
+    :param aliases: Additional names that reference the same blueprint.
+    """
 
     name: str
     category: str
@@ -76,23 +84,35 @@ _SERVER_BLUEPRINTS: tuple[ServerBlueprint, ...] = (
         aliases=("autonomous", "reasoner"),
     ),
 )
+"""Tuple containing all predefined server blueprints."""
 
 _BLUEPRINT_INDEX = {
     blueprint.name.lower(): blueprint for blueprint in _SERVER_BLUEPRINTS
 }
+"""Lookup table mapping blueprint names and aliases to their definitions."""
 for blueprint in _SERVER_BLUEPRINTS:
     for alias in blueprint.aliases:
         _BLUEPRINT_INDEX.setdefault(alias.lower(), blueprint)
 
 
 def iter_blueprints() -> tuple[ServerBlueprint, ...]:
-    """Return all server blueprints."""
+    """
+    Return all server blueprints.
+
+    :returns: Tuple containing every registered ``ServerBlueprint``.
+    """
 
     return _SERVER_BLUEPRINTS
 
 
 def get_blueprint(key: str) -> ServerBlueprint:
-    """Fetch a blueprint by name or alias."""
+    """
+    Fetch a blueprint by name or alias.
+
+    :param key: Blueprint name or alias to look up.
+    :returns: Matching ``ServerBlueprint`` instance.
+    :raises KeyError: If the key does not correspond to a blueprint.
+    """
 
     normalized = key.lower()
     if normalized not in _BLUEPRINT_INDEX:

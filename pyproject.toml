@@ -4,14 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastmcp-math-servers"
-version = "0.0.3"
+version = "0.0.11"
 description = "Example FastMCP servers covering the core MCP categories"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Codex Samples"}]
 dependencies = [
-    "fastmcp>=0.1.0",
+    "fastmcp>=2.13.0",
     "openai>=2.6.0,<3",
     "python-dotenv>=1.0",
 ]
@@ -24,6 +24,7 @@ dev = [
 
 [project.scripts]
 fastmcp-math-demo = "mcp_math_servers.client.demo:main"
+fastmcp-math-chat = "mcp_math_servers.client.chat:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_math_servers"]
