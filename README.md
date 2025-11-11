@@ -41,7 +41,7 @@ Keys loaded via `python-dotenv`, so the demo client and servers will automatical
 
 ## Category Walkthrough
 
-See [docs/CATEGORIES.md](docs/CATEGORIES.md) for a full breakdown of each category and links to the detailed guides.
+See [docs/mcp_server_use_categories.md](docs/mcp_server_use_categories.md) for a full breakdown of each category and links to the detailed guides.
 
 - **Capability Server (Category 1)** – Lists tool schemas but never executes. Demo with `fastmcp-math-chat --server capability --no-planner`; attempted commands return the “read-only” reminder.
 - **Data Server (Category 2)** – Executes math tools and returns clean JSON (`operation`, `inputs`, `result`). Try `fastmcp-math-chat --server data --no-planner --show-json` and run `add 2 3`.

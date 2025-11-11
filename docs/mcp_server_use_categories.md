@@ -5,6 +5,13 @@ Protocol (MCP) server usage patterns, along with examples, protocol
 behavior, and model roles. It also includes extended categories for
 advanced use cases.
 
+## Quick Links to Local Examples
+
+- [Capability Discovery (`math-capability-registry`)](categories/capability_discovery.md)
+- [Data-Providing (`math-data-provider`)](categories/data_provider.md)
+- [Prompt-Returning (`math-prompt-helper`)](categories/prompt_helper.md)
+- [Autonomous Reasoning (`math-autonomous-reasoner`)](categories/autonomous_reasoner.md)
+
 ---
 
 ## 🌟 Overview
