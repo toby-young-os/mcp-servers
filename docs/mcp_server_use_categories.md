@@ -7,6 +7,8 @@ advanced use cases.
 
 ## Quick Links to Local Examples
 
+Only the autonomous reasoning server (Category 4) depends on OpenAI. The other categories execute locally.
+
 - [Capability Discovery (`math-capability-registry`)](categories/capability_discovery.md)
 - [Data-Providing (`math-data-provider`)](categories/data_provider.md)
 - [Prompt-Returning (`math-prompt-helper`)](categories/prompt_helper.md)
