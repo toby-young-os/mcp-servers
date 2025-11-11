@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 from dataclasses import dataclass
-from typing import Mapping, Sequence
+from typing import Callable, ClassVar, Mapping, Sequence
 
-import asyncio
+try:
+    from colorama import Fore, Style, init as colorama_init
+except ImportError:  # pragma: no cover - optional dependency
+    colorama_init = None
+    Fore = Style = None  # type: ignore[assignment]
 
 from mcp_math_servers.client.planner import (
     MCPPlanner,
@@ -203,7 +208,8 @@ class CapabilityHandler(BaseHandler):
 class _BinaryOpMixin:
     """Mixin that parses simple binary math commands."""
 
-    OPERATIONS = {}
+    OperationBuilder = Callable[[float, float], dict[str, float]]
+    OPERATIONS: ClassVar[dict[str, tuple[str, OperationBuilder]]] = {}
 
     def _parse(self, user_input: str):
         """
@@ -338,16 +344,16 @@ class PlannerHandler(BaseHandler):
         print("Ask any natural-language question. Type 'exit' to quit.")
 
     async def handle(self, user_input: str) -> None:
-        print("[planner] Interpreting request via LLM...")
+        print(f"{PLANNER_COLOR}[planner] Interpreting request via LLM...{Style.RESET_ALL}")
         try:
             result = await self._planner.run(user_input)
         except PlannerError as exc:
-            print(f"[planner] {exc}")
+            print(f"{PLANNER_COLOR}[planner] {exc}{Style.RESET_ALL}")
             if self.context.args.show_json:
-                print("[planner] Falling back to manual mode for this turn.")
+                print(f"{PLANNER_COLOR}[planner] Falling back to manual mode for this turn.{Style.RESET_ALL}")
             return
         action = "respond" if not result.tool_name else f"call {result.tool_name}"
-        print(f"[planner] Completed plan: {action}")
+        print(f"{PLANNER_COLOR}[planner] Completed plan: {action}{Style.RESET_ALL}")
         self._print_result(result)
 
     def _print_result(self, result: PlannerResult) -> None:
@@ -372,12 +378,12 @@ class PlannerHandler(BaseHandler):
             )
         message = (result.message or "").strip()
         if message:
-            print(message)
+            print(f"{PLANNER_COLOR}{message}{Style.RESET_ALL}")
         else:
-            print("[planner] Received an empty response from the LLM.")
+            print(f"{PLANNER_COLOR}[planner] Received an empty response from the LLM.{Style.RESET_ALL}")
             if not self.context.args.show_json:
                 print(
-                    "Re-run with --show-json or --no-planner if the issue persists."
+                    f"{PLANNER_COLOR}Re-run with --show-json or --no-planner if the issue persists.{Style.RESET_ALL}"
                 )
 
 
@@ -413,6 +419,7 @@ async def _async_main(args: argparse.Namespace) -> None:
     tools = await server._tool_manager.get_tools()  # type: ignore[attr-defined]
     planner = None
     use_planner = _should_use_planner(args, blueprint)
+    # Planner is optional; only instantiate when OpenAI credentials are present.
     if use_planner:
         if not is_planner_available():
             print("[chat] Planner requested but OpenAI is unavailable; falling back to manual mode.")
@@ -454,6 +461,8 @@ async def _async_main(args: argparse.Namespace) -> None:
             print("\nExiting chat.")
             break
         user_input = user_input.strip()
+        if user_input and not context.planner and not args.show_json and USER_COLOR:
+            print(f"{USER_COLOR}You> {user_input}{Style.RESET_ALL}")
         if not user_input:
             continue
         lowered = user_input.lower()
@@ -466,7 +475,11 @@ async def _async_main(args: argparse.Namespace) -> None:
         if lowered in MANIFEST_COMMANDS:
             _print_manifest(tools)
             continue
+
+        # Dispatch to the handler (planner-aware or manual) for execution.
         await handler.handle(user_input)
+
+
 def _should_use_planner(args: argparse.Namespace, blueprint: ServerBlueprint) -> bool:
     """
     Determine whether the planner should be engaged for the session.
@@ -495,3 +508,10 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 if __name__ == "__main__":  # pragma: no cover
     main()
+if colorama_init is not None:
+    colorama_init(autoreset=True)
+    USER_COLOR = Fore.CYAN
+    PLANNER_COLOR = Fore.MAGENTA
+    OUTPUT_COLOR = Fore.GREEN
+else:
+    USER_COLOR = PLANNER_COLOR = OUTPUT_COLOR = ""

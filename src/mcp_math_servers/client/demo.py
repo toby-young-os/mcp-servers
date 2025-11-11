@@ -4,15 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Iterable
+from collections.abc import Mapping
+from typing import Any, Iterable
 
 import asyncio
 
+from fastmcp import FastMCP
 from mcp_math_servers.client import ClientScenario, ScenarioRegistry
 from mcp_math_servers.servers import ServerBlueprint, get_blueprint
 
 
-async def _prepare_server(blueprint: ServerBlueprint):
+async def _prepare_server(blueprint: ServerBlueprint) -> tuple[FastMCP, Mapping[str, object]]:
     """
     Instantiate a server blueprint and collect its registered tools.
 
@@ -48,7 +50,7 @@ def _print_server_intro(server, blueprint: ServerBlueprint) -> None:
         print(f"Instructions: {server.instructions}")
 
 
-def _print_manifest(tools: dict[str, object]) -> None:
+def _print_manifest(tools: Mapping[str, object]) -> None:
     """
     Print the list of available tools and their schemas.
 
@@ -64,7 +66,11 @@ def _print_manifest(tools: dict[str, object]) -> None:
         print(f"    schema: {json.dumps(parameters, indent=2)}")
 
 
-async def _run_tool(tools: dict[str, object], name: str, args: dict[str, float | str]):
+async def _run_tool(
+    tools: Mapping[str, object],
+    name: str,
+    args: Mapping[str, float | str],
+) -> Mapping[str, Any] | list[object]:
     """
     Execute a named tool with the provided arguments.
 
