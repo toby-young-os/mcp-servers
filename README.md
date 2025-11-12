@@ -29,6 +29,8 @@ fastmcp-math-chat --server data --no-planner # fall back to manual commands
 
 Use `exit` to quit, `help` for guidance, and `tools` to reprint the manifest. When a planner is available (OpenAI key loaded), the chat client automatically routes non-autonomous servers through the LLM planner so you can type natural-language requests. Disable that behavior with `--no-planner`. Without the planner, the data/prompt servers expect commands like `add 2 3` or `divide 10 5`.
 
+> **Planner behavior:** With `--planner` enabled the client asks the LLM planner to choose a single tool call per turn, prints the planner’s decision (magenta), and then executes that tool. Multi-step instructions still require additional turns unless you use the autonomous server, which chains sub-steps inside its own tool implementation.
+
 ## OpenAI Credentials
 
 Some scenarios (e.g., autonomous reasoning) call OpenAI. Create a `.env` file next to `pyproject.toml` with:
