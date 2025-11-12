@@ -1,3 +1,21 @@
+
+## Category Walkthrough
+
+## Server Blueprint Registry
+
+Our repo keeps an in-process registry of available servers in `src/mcp_math_servers/servers/__init__.py`. Each `ServerBlueprint` captures the server name, aliases, category, summary, and the `build_server()` factory that returns a FastMCP app. The chat/demo clients call `get_blueprint(name)` to instantiate the server, retrieve its tool metadata from FastMCP, and run the tools in-process.
+
+```python
+# Example: look up the "data" server
+blueprint = get_blueprint("data")
+server = blueprint.factory()
+tools = await server._tool_manager.get_tools()
+```
+
+To add a new server, define it beside the other blueprints and add an alias (e.g., `"custom"`). This makes it immediately available to the chat CLI via `--server custom`.
+
+
+
 # MCP Server Use Categories
 
 This document summarizes the four primary categories of Model Context
