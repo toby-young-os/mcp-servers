@@ -16,6 +16,8 @@ Each scenario instantiates the relevant FastMCP server, prints its manifest, and
 
 ## Interactive Chat
 
+See [docs/planner.md](docs/planner.md) for a deeper explanation of planner mode, tool selection, and when to use it.
+
 To converse with a server in a REPL-style loop:
 
 ```bash
