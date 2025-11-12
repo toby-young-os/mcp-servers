@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Mapping, Sequence
+from typing import ClassVar
 
 try:
-    from colorama import Fore, Style, init as colorama_init
+    from colorama import Fore, Style
+    from colorama import init as colorama_init
 except ImportError:  # pragma: no cover - optional dependency
     colorama_init = None
     Fore = Style = None  # type: ignore[assignment]

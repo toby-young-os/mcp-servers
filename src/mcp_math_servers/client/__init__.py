@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
-from typing import Awaitable, Callable, Mapping
 
 from mcp_math_servers.servers import ServerBlueprint
 

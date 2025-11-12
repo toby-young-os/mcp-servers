@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
-import json
-from collections.abc import Mapping
-from typing import Any, Iterable
-
 import asyncio
+import json
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 from fastmcp import FastMCP
+
 from mcp_math_servers.client import ClientScenario, ScenarioRegistry
 from mcp_math_servers.servers import ServerBlueprint, get_blueprint
 

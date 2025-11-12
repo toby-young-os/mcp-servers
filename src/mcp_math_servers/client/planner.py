@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
-
-import asyncio
+from typing import Any
 
 try:
     from openai import AsyncOpenAI
@@ -265,7 +265,7 @@ class MCPPlanner:
                 timeout=self._timeout,
             )
             return self._extract_content(response)
-        except asyncio.TimeoutError:  # pragma: no cover
+        except TimeoutError:  # pragma: no cover
             raise PlannerError(
                 "OpenAI planner request timed out. Try again or disable the planner."
             )
