@@ -46,6 +46,8 @@ Keys loaded via `python-dotenv`, so the demo client and servers will automatical
 ## Category Walkthrough
 
 ## How It All Fits Together
+See [docs/setup.md](docs/setup.md) for environment setup, installs, and running tests.
+
 
 1. **Server blueprints** live in `src/mcp_math_servers/servers/__init__.py`. Each `ServerBlueprint` describes a FastMCP server (name/aliases, category, summary, factory function).
 2. **Clients** (chat or demo) call `get_blueprint(...)`, instantiate the server via `blueprint.factory()`, and retrieve the tool metadata from FastMCP (`server._tool_manager.get_tools()`).
