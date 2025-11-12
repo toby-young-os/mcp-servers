@@ -19,3 +19,24 @@ Commands like `add 2 3` produce:
   "result": 5.0
 }
 ```
+
+## Sample Request and Response
+
+Request:
+
+```json
+{
+  "augend": 8,
+  "addend": 13
+}
+```
+
+Response:
+
+```json
+{
+  "operation": "addition",
+  "inputs": {"augend": 8.0, "addend": 13.0},
+  "result": 21.0
+}
+```

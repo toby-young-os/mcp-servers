@@ -11,3 +11,12 @@ fastmcp-math-chat --server capability --no-planner
 ```
 
 Typing commands like `add 2 3` results in a reminder that the registry is read-only, illustrating Category 1 behavior.
+
+## Sample Response
+
+Attempting to call `math_add` just returns the read-only message:
+
+```text
+> add 2 3
+Capability registry is read-only. Run the data provider or prompt helper servers to execute math.
+```
