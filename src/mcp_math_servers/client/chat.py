@@ -344,6 +344,8 @@ class PlannerHandler(BaseHandler):
         print("Ask any natural-language question. Type 'exit' to quit.")
 
     async def handle(self, user_input: str) -> None:
+        # Note: planner handles one tool invocation per turn; multi-step reasoning
+        # still requires additional facilitator logic.
         print(f"{PLANNER_COLOR}[planner] Interpreting request via LLM...{Style.RESET_ALL}")
         try:
             result = await self._planner.run(user_input)
@@ -414,6 +416,7 @@ async def _async_main(args: argparse.Namespace) -> None:
     :param args: Parsed command-line arguments.
     """
 
+    # Look up the server blueprint (our in-process “registry”) and instantiate it.
     blueprint = get_blueprint(args.server)
     server = blueprint.factory()
     tools = await server._tool_manager.get_tools()  # type: ignore[attr-defined]
@@ -433,6 +436,7 @@ async def _async_main(args: argparse.Namespace) -> None:
                 print(f"[chat] Failed to initialize planner: {exc}")
                 planner = None
 
+    # Wrap the server and toolset in a ChatContext for downstream handlers.
     context = ChatContext(blueprint=blueprint, tools=tools, args=args, planner=planner)
     handler = _make_handler(blueprint, context)
 
