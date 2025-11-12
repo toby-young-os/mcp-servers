@@ -55,7 +55,7 @@ See [docs/setup.md](docs/setup.md) for environment setup, installs, and running 
 4. **Planner mode** (optional `--planner`) asks an LLM to pick a single tool call per turn based on the tool metadata; the planner’s decision is printed in magenta before executing the tool.
 5. **Autonomous server** is a special case: its tool delegates to OpenAI internally, so multi-stage reasoning happens inside that tool (requires `OPENAI_API_KEY`).
 
-See [docs/mcp_server_use_categories.md](docs/mcp_server_use_categories.md) for a full breakdown of each category and links to the detailed guides.
+See [docs/mcp_server_use_categories.md](docs/mcp_server_use_categories.md) for a full breakdown of each category and links to the detailed guides. If you want the high-level wiring diagram, read [docs/architecture.md](docs/architecture.md).
 
 - **Capability Server (Category 1)** – Lists tool schemas but never executes. Demo with `fastmcp-math-chat --server capability --no-planner`; attempted commands return the “read-only” reminder.
 - **Data Server (Category 2)** – Executes math tools and returns clean JSON (`operation`, `inputs`, `result`). Try `fastmcp-math-chat --server data --no-planner --show-json` and run `add 2 3`.

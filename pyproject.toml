@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastmcp-math-servers"
-version = "0.1.3"
+version = "0.1.5"
 description = "Example FastMCP servers covering the core MCP categories"
 readme = "README.md"
 requires-python = ">=3.11"
