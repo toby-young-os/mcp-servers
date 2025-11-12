@@ -1,4 +1,7 @@
-"""Prompt-returning FastMCP server implementation (see docs/categories/prompt_helper.md)."""
+"""Prompt-returning FastMCP server implementation.
+
+Refer to ``docs/categories/prompt_helper.md`` for workflow details.
+"""
 
 from __future__ import annotations
 
@@ -53,7 +56,8 @@ def _build_prompt(operation: str, payload: dict[str, float], answer: float) -> s
     return (
         f"The {operation} result is {answer}. Inputs: {payload}. "
         "Incorporate this numeric value into your next reasoning step. "
-        "If the user asked a follow-up, restate the interpreted question before responding."
+        "If the user asked a follow-up, restate the interpreted question before "
+        "responding."
     )
 
 
@@ -68,7 +72,12 @@ def _structure(operation: str, **inputs: float) -> dict[str, Any]:
 
     result = _compute(operation, inputs)
     prompt = _build_prompt(operation, inputs, result)
-    return PromptedResult(operation=operation, inputs=inputs, result=result, next_prompt=prompt).serialize()
+    return PromptedResult(
+        operation=operation,
+        inputs=inputs,
+        result=result,
+        next_prompt=prompt,
+    ).serialize()
 
 
 def _compute(operation: str, inputs: dict[str, float]) -> float:

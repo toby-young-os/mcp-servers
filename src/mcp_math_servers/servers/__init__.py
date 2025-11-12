@@ -6,6 +6,23 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
+from .autonomous_reasoner import (
+    CATEGORY as AUTONOMOUS_CATEGORY,
+)
+from .autonomous_reasoner import (
+    SERVER_NAME as AUTONOMOUS_SERVER_NAME,
+)
+from .autonomous_reasoner import build_server as build_autonomous_reasoner
+from .capability_discovery import CATEGORY as CAPABILITY_CATEGORY
+from .capability_discovery import SERVER_NAME as CAPABILITY_SERVER_NAME
+from .capability_discovery import build_server as build_capability_registry
+from .data_provider import CATEGORY as DATA_CATEGORY
+from .data_provider import SERVER_NAME as DATA_SERVER_NAME
+from .data_provider import build_server as build_data_provider
+from .prompt_helper import CATEGORY as PROMPT_CATEGORY
+from .prompt_helper import SERVER_NAME as PROMPT_SERVER_NAME
+from .prompt_helper import build_server as build_prompt_helper
+
 
 class ServerFactory(Protocol):
     """Protocol for functions that construct and return a FastMCP server."""
@@ -37,23 +54,6 @@ __all__ = [
     "ServerBlueprint",
     "ServerFactory",
 ]
-
-from .autonomous_reasoner import (
-    CATEGORY as AUTONOMOUS_CATEGORY,
-)
-from .autonomous_reasoner import (
-    SERVER_NAME as AUTONOMOUS_SERVER_NAME,
-)
-from .autonomous_reasoner import build_server as build_autonomous_reasoner
-from .capability_discovery import CATEGORY as CAPABILITY_CATEGORY
-from .capability_discovery import SERVER_NAME as CAPABILITY_SERVER_NAME
-from .capability_discovery import build_server as build_capability_registry
-from .data_provider import CATEGORY as DATA_CATEGORY
-from .data_provider import SERVER_NAME as DATA_SERVER_NAME
-from .data_provider import build_server as build_data_provider
-from .prompt_helper import CATEGORY as PROMPT_CATEGORY
-from .prompt_helper import SERVER_NAME as PROMPT_SERVER_NAME
-from .prompt_helper import build_server as build_prompt_helper
 
 _SERVER_BLUEPRINTS: tuple[ServerBlueprint, ...] = (
     ServerBlueprint(
