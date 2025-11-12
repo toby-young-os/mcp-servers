@@ -43,6 +43,14 @@ Keys loaded via `python-dotenv`, so the demo client and servers will automatical
 
 ## Category Walkthrough
 
+## How It All Fits Together
+
+1. **Server blueprints** live in `src/mcp_math_servers/servers/__init__.py`. Each `ServerBlueprint` describes a FastMCP server (name/aliases, category, summary, factory function).
+2. **Clients** (chat or demo) call `get_blueprint(...)`, instantiate the server via `blueprint.factory()`, and retrieve the tool metadata from FastMCP (`server._tool_manager.get_tools()`).
+3. **Handlers** (capability, data, prompt, autonomous) use those tool definitions to execute commands, returning structured JSON (and optional prompts) for the user or planner.
+4. **Planner mode** (optional `--planner`) asks an LLM to pick a single tool call per turn based on the tool metadata; the planner’s decision is printed in magenta before executing the tool.
+5. **Autonomous server** is a special case: its tool delegates to OpenAI internally, so multi-stage reasoning happens inside that tool (requires `OPENAI_API_KEY`).
+
 See [docs/mcp_server_use_categories.md](docs/mcp_server_use_categories.md) for a full breakdown of each category and links to the detailed guides.
 
 - **Capability Server (Category 1)** – Lists tool schemas but never executes. Demo with `fastmcp-math-chat --server capability --no-planner`; attempted commands return the “read-only” reminder.
