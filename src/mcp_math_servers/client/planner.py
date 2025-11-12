@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
-
-import asyncio
+from typing import Any
 
 try:
     from openai import AsyncOpenAI
@@ -125,7 +125,8 @@ class MCPPlanner:
         """
         if not is_planner_available():
             raise PlannerError(
-                "OpenAI client is unavailable. Ensure `openai` is installed and OPENAI_API_KEY is set."
+                "OpenAI client is unavailable. Ensure `openai` is installed and "
+                "OPENAI_API_KEY is set."
             )
         self._tools = tools
         self._client = AsyncOpenAI()
@@ -265,10 +266,10 @@ class MCPPlanner:
                 timeout=self._timeout,
             )
             return self._extract_content(response)
-        except asyncio.TimeoutError:  # pragma: no cover
+        except TimeoutError as exc:  # pragma: no cover
             raise PlannerError(
                 "OpenAI planner request timed out. Try again or disable the planner."
-            )
+            ) from exc
         except Exception as exc:  # pragma: no cover - passthrough errors
             raise PlannerError(f"OpenAI planner failed: {exc}") from exc
 

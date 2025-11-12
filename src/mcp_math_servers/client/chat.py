@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Mapping, Sequence
+from typing import ClassVar
 
 try:
-    from colorama import Fore, Style, init as colorama_init
+    from colorama import Fore, Style
+    from colorama import init as colorama_init
 except ImportError:  # pragma: no cover - optional dependency
     colorama_init = None
     Fore = Style = None  # type: ignore[assignment]
@@ -236,7 +238,11 @@ class _BinaryOpMixin:
             return None
         return op, a, b
 
-    async def _run_operation(self, tool_name: str, payload: Mapping[str, float]) -> Mapping[str, object]:
+    async def _run_operation(
+        self,
+        tool_name: str,
+        payload: Mapping[str, float],
+    ) -> Mapping[str, object]:
         """
         Execute the requested tool with the provided payload.
 
@@ -255,7 +261,10 @@ class DataHandler(_BinaryOpMixin, BaseHandler):
     OPERATIONS = {
         "add": ("math_add", lambda a, b: {"augend": a, "addend": b}),
         "subtract": ("math_subtract", lambda a, b: {"minuend": a, "subtrahend": b}),
-        "multiply": ("math_multiply", lambda a, b: {"multiplicand": a, "multiplier": b}),
+        "multiply": (
+            "math_multiply",
+            lambda a, b: {"multiplicand": a, "multiplier": b},
+        ),
         "divide": ("math_divide", lambda a, b: {"dividend": a, "divisor": b}),
     }
 
@@ -284,7 +293,10 @@ class PromptHandler(_BinaryOpMixin, BaseHandler):
     OPERATIONS = {
         "add": ("math_add_with_prompt", lambda a, b: {"augend": a, "addend": b}),
         "subtract": ("math_subtract_with_prompt", lambda a, b: {"minuend": a, "subtrahend": b}),
-        "multiply": ("math_multiply_with_prompt", lambda a, b: {"multiplicand": a, "multiplier": b}),
+        "multiply": (
+            "math_multiply_with_prompt",
+            lambda a, b: {"multiplicand": a, "multiplier": b},
+        ),
         "divide": ("math_divide_with_prompt", lambda a, b: {"dividend": a, "divisor": b}),
     }
 
@@ -344,16 +356,26 @@ class PlannerHandler(BaseHandler):
         print("Ask any natural-language question. Type 'exit' to quit.")
 
     async def handle(self, user_input: str) -> None:
-        print(f"{PLANNER_COLOR}[planner] Interpreting request via LLM...{Style.RESET_ALL}")
+        # Note: planner handles one tool invocation per turn; multi-step reasoning
+        # still requires additional facilitator logic.
+        print(
+            f"{PLANNER_COLOR}[planner] Interpreting request via LLM..."
+            f"{Style.RESET_ALL}"
+        )
         try:
             result = await self._planner.run(user_input)
         except PlannerError as exc:
             print(f"{PLANNER_COLOR}[planner] {exc}{Style.RESET_ALL}")
             if self.context.args.show_json:
-                print(f"{PLANNER_COLOR}[planner] Falling back to manual mode for this turn.{Style.RESET_ALL}")
+                print(
+                    f"{PLANNER_COLOR}[planner] Falling back to manual mode for this turn."
+                    f"{Style.RESET_ALL}"
+                )
             return
         action = "respond" if not result.tool_name else f"call {result.tool_name}"
-        print(f"{PLANNER_COLOR}[planner] Completed plan: {action}{Style.RESET_ALL}")
+        print(
+            f"{PLANNER_COLOR}[planner] Completed plan: {action}{Style.RESET_ALL}"
+        )
         self._print_result(result)
 
     def _print_result(self, result: PlannerResult) -> None:
@@ -380,10 +402,14 @@ class PlannerHandler(BaseHandler):
         if message:
             print(f"{PLANNER_COLOR}{message}{Style.RESET_ALL}")
         else:
-            print(f"{PLANNER_COLOR}[planner] Received an empty response from the LLM.{Style.RESET_ALL}")
+            print(
+                f"{PLANNER_COLOR}[planner] Received an empty response from the LLM."
+                f"{Style.RESET_ALL}"
+            )
             if not self.context.args.show_json:
                 print(
-                    f"{PLANNER_COLOR}Re-run with --show-json or --no-planner if the issue persists.{Style.RESET_ALL}"
+                    f"{PLANNER_COLOR}Re-run with --show-json or --no-planner if the issue persists."
+                    f"{Style.RESET_ALL}"
                 )
 
 
@@ -414,6 +440,7 @@ async def _async_main(args: argparse.Namespace) -> None:
     :param args: Parsed command-line arguments.
     """
 
+    # Look up the server blueprint (our in-process “registry”) and instantiate it.
     blueprint = get_blueprint(args.server)
     server = blueprint.factory()
     tools = await server._tool_manager.get_tools()  # type: ignore[attr-defined]
@@ -422,7 +449,10 @@ async def _async_main(args: argparse.Namespace) -> None:
     # Planner is optional; only instantiate when OpenAI credentials are present.
     if use_planner:
         if not is_planner_available():
-            print("[chat] Planner requested but OpenAI is unavailable; falling back to manual mode.")
+            print(
+                "[chat] Planner requested but OpenAI is unavailable; "
+                "falling back to manual mode."
+            )
         else:
             try:
                 planner = MCPPlanner(
@@ -433,6 +463,7 @@ async def _async_main(args: argparse.Namespace) -> None:
                 print(f"[chat] Failed to initialize planner: {exc}")
                 planner = None
 
+    # Wrap the server and toolset in a ChatContext for downstream handlers.
     context = ChatContext(blueprint=blueprint, tools=tools, args=args, planner=planner)
     handler = _make_handler(blueprint, context)
 

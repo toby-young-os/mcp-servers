@@ -11,3 +11,28 @@ fastmcp-math-chat --server autonomous --no-planner --show-json
 ```
 
 Ask “What is the result of doubling 7 and then subtracting 3?” to see the OpenAI-produced reasoning trace.
+
+## Sample Request and Response
+
+Request:
+
+```json
+{
+  "problem": "If you double 3 and add 1, what do you get?"
+}
+```
+
+Response:
+
+```json
+{
+  "problem": "If you double 3 and add 1, what do you get?",
+  "reasoning_steps": [
+    "Double 3 to get 6",
+    "Add 1 to get 7"
+  ],
+  "final_answer": "7",
+  "model": "gpt-4.1-mini",
+  "source": "openai"
+}
+```

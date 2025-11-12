@@ -1,4 +1,7 @@
-"""Data-providing FastMCP server implementation (see docs/categories/data_provider.md)."""
+"""Data-providing FastMCP server implementation.
+
+Refer to ``docs/categories/data_provider.md`` for full details.
+"""
 
 from __future__ import annotations
 
@@ -47,7 +50,12 @@ def _response(operation: str, **inputs: float) -> dict[str, Any]:
     :returns: Serialized ``MathResult`` dictionary.
     """
 
-    return MathResult(operation=operation, inputs=inputs, result=_compute(operation, inputs)).serialize()
+    result = _compute(operation, inputs)
+    return MathResult(
+        operation=operation,
+        inputs=inputs,
+        result=result,
+    ).serialize()
 
 
 def _compute(operation: str, inputs: dict[str, float]) -> float:
